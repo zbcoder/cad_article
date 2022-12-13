@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load index %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <title>Result</title>
+    
+    <script src="https://www.google.com/jsapi"></script>
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+            bg_pattern = '#292929'
+            bg_pattern_text ='#f9f9f9'
+        }
+        else{
+            bg_pattern = '#fff'
+            bg_pattern_text ='#141414'
+        }
+        google.load("visualization", "1", {packages:["corechart"]});
+        function drawChart(graph_data) {
+         var data = google.visualization.arrayToDataTable(graph_data);
+         var options = {
+            titleTextStyle: {
+                color: bg_pattern_text
+            },
+          title: 'Диаграмма',
+          hAxis: { title: 'Модель', textColor: bg_pattern_text },
+          vAxis: { title: 'K загруженности', textColor: bg_pattern_text, ticks: [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1],},
+          backgroundColor: bg_pattern,
+          legend: "none"
+        };
+         var chart = new google.visualization.ColumnChart(document.getElementById('diagram_by_model'));
+         chart.draw(data, options);
+         document.querySelector('.loader').classList.add('hidden');
+        }
+    </script>
+</head>
+
+<body onload="drawChart({{graph_data}})">
+    <div class="container">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col">
+                    <h5 class="fs-5">Входные данные</h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <th scope="col" class="col-md-1">№ i оп.</th>
+                            <th scope="col" class="col-md-3">Модель станка</th>
+                            <th scope="col" class="col-md-1">t <sub>i</sub> шт мин</th>
+                            <th scope="col" class="col-md-1">Д, шт</th>
+                            <th scope="col">см</th>
+                            <th scope="col">Ф <sub>г</sub>, час</th>
+                            <th scope="col">К<sub>загр</sub></th>
+                        </thead>
+                        <tbody>
+                            {% for elem in range %}
+                            <tr>
+                                <td><input type="hidden" name="operation_number" value="{{stored_data.operation_number|index:elem}}">{{stored_data.operation_number|index:elem}}</td>
+                                <td><input type="hidden" name="machine" value="{{stored_data.machine|index:elem}}">{{stored_data.machine|index:elem}}</td>
+                                <td><input type="hidden" name="item_time" value="{{stored_data.item_time|index:elem}}">{{stored_data.item_time|index:elem}}</td>
+                                <td>{{stored_data.year_program.0}}</td>
+                                <td>{{const_data.0}}</td>
+                                <td>{{const_data.1}}</td>
+                                <td>{{const_data.2}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if result == False %}
+                <label for="Dvalue" class="form-label">Вам необходимо изменить коэфициент и пересчитать рассчет</label>
+                <div class="input-group">
+                    <input id="Dvalue" name="year_program" type="text" class="form-control">
+                    <button class="btn btn-primary">Пересчитать</button>
+                </div>
+            {% endif %}
+        </form>
+        <div class="row">
+            <div class="col">
+                <h5 class="fs-5" style="margin-top: 10px; margin-bottom: 10px;">Результаты вычислений</h5>
+                <table class="table table-bordered">
+                    <thead>
+                        <th>Модель</th>
+                        <th>C<sub>i</sub></th>
+                        <th>C<sub>прибл</sub></th>
+                        <th>K<sub>загр</sub></th>
+                        <th>Комментарий</th>
+                    </thead>
+                    <tbody>
+                        {% for result in calc_results %}
+                        <tr>
+                            <td>{{result.machine}}</td>
+                            <td>{{result.Ci.practice}}</td>
+                            <td>{{result.Ci.approximate}}</td>
+                            <td>{{result.Kload}}</td>
+                            <td style="color: {{result.message.color}}">{{result.message.text}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-5">
+                <form action="">
+                    
+                </form>
+            </div>
+        </div>
+        <h5 class="fs-5">Диаграмма загрузки оборудования по операциям и моделям</h5>
+        <div class="row">
+            <div class="col">
+                <p class="text-start">X - Модель станка</p>
+                <p class="text-start">Y - Коэфициент загруженности</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <div id="diagram_by_model" class="animated" style="height: 550px"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <script src={% static 'js/add_str.js' %}></script>
+    <title>Start page</title>
+    <style>
+        .sub{
+            vertical-align: -.5em;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="margin-top: 2.5%">
+        {% if description %}
+        <h5 class="fs-5 text-start">Вы выбрали следующую конфигурацию:</h5>
+        <ul>
+            <li> <p class="fs-5">Масса изделия: {{params.mass}}кг</p> </li>
+            <li><p class="fs-5">Тип производства: {{params.ind_type.0.fields.it_name}}</p></li>
+            <li>
+                <p class="fs-5">Диапазон значений на годовую программу выпуска изеделий в соответствии с типом производства от {{description.0.fields.min_count}} 
+                    до {{description.0.fields.max_count}} шт.</p>
+            </li>
+            <li>
+                <p class="fs-5">Неизменные входные параметры: Ф<sub>г</sub>=1970, см=2, К<sub>загр</sub>=0.95</p>
+            </li>
+        </ul>
+        <form action="{% url 'result-page' %}" method="POST">
+            {% csrf_token %}
+            <table class="table talbe-striped" style="margin-top:5%" id="table">
+                <thead>
+                    <th scope="col" class="col-md-1">№ i оп.</th>
+                    <th scope="col" class="col-md-3">Модель станка</th>
+                    <th scope="col" class="col-md-1">t <sub>i</sub> шт мин</th>
+                    <th scope="col" class="col-md-1">Д, шт</th>
+                    {% comment %} <th scope="col">см</th>
+                    <th scope="col">Ф <sub>г</sub>, час</th>
+                    <th scope="col">К<sub>загр</sub></th> {% endcomment %}
+                    <th class="col-md-1"></th>
+                </thead>
+                <tbody>
+                    <tr>
+                        
+                        <td><input type="hidden" name="operation_number" value="010">010</td>
+                        <td>
+                            <select name="machine" id="" class="form-select">
+                            {% for machine in machines %}
+                            <option value="{{machine.fields.machine_name}}">
+                                {{machine.fields.machine_name}}
+                            </option>
+                            {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="number" min="0.01" max="1000" step="0.0001" value="0" name="item_time" class="form-control"></td>
+                        <td><input type="number" min="{{description.0.fields.min_count}}" max="{{description.0.fields.max_count}}" value="0" name="year_program" onchange="change_all(3, this)" class="form-control"></td>
+                        {% comment %} <td><input type="number" min="0.0001" max="1000" step="0.0001" value="0" name="adjaency_coef" onchange="change_all(4, this)" class="form-control"></td>
+                        <td><input type="number" min="1970" max="2300" step="1" value="0" name="year_fond" onchange="change_all(5, this)" class="form-control"></td>
+                        <td><input type="number" min="0.0001" max="5" step="0.0001" value="0" name="teor_koef" onchange="change_all(6, this)" class="form-control"></td> {% endcomment %}
+                        <td><button type="button" class="del-btn" onclick="del_str(this)"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg></button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-primary" type="submit">Начать рассчет</button>
+            <button class="btn btn-secondary" type="button" style="float: right;" onclick="add_str()">+</button>
+        </form>
+        {% else %}
+        {{test}}
+        <div class="h5">Выберите тип производства и массу изделия для того, чтобы рассчитать Д(Годовая программа выпуска изеделий в соответствии с типом производства)</div>
+        <form method="GET">
+            <div class="row">
+                <div class="col">
+                    <label for="industrial-type" class="form-label">Тип производства</label>
+                    <select name="ic_name" id="industrial-type" class="form-select">
+                        {% for elem in ind_form %}
+                            <option value="{{elem.pk}}">{{elem.fields.it_name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="mass-input" class="form-label">Введите массу изделия</label>
+                    <input type="text" id="mass-input" class="form-control" name="mass">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button class="btn btn-primary" style="margin-top: 10px;">Рассчитать</button>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
